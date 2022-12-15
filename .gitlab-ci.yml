@@ -1,0 +1,14 @@
+#
+stages:
+  - development
+
+deploy_to_web:
+  stage: development
+  tags:
+    - monitoring
+  # when: manual
+  #  before_script:
+  #    - echo "Deploy front-end to Web server"
+  script:
+    - rm -rf /var/www/html/navsy-client-front/*
+    - cp -R ./dist/* /var/www/html/navsy-client-front/

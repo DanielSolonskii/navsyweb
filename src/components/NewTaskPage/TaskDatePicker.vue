@@ -1,0 +1,371 @@
+<template>
+
+  <v-menu v-model="menuDateRangeFilter" :close-on-content-click="false" transition="scale-transition" offset-y
+    min-width="650px">
+    <template v-slot:activator="{ on, attrs }">
+      <!--
+      <v-text-field v-on="on" v-bind="attrs" dense outlined hide-details color="indigo darken-3" readonly class="mt-1"
+        :value="dateRange | formatDisplayDateTimeRange">
+      </v-text-field>
+      -->
+      <v-row v-on="on" v-bind="attrs">
+        <v-col cols="4">
+          <div style="display: flex">
+          <div class="mr-1">
+            <v-icon>
+              mdi-calendar
+            </v-icon>
+          </div>
+          <div style="display: flex; flex-direction: column">
+            <span>{{ date }}</span>
+            <span>{{ year }}</span>
+          </div>
+          </div>
+        </v-col>
+        <v-col cols="4">
+          <div style="display: flex">
+          <div>
+            <v-icon>
+              mdi-clock-outline
+            </v-icon>
+          </div>
+          <div style="display: flex; flex-direction: column">
+            
+            <span class="ml-1">{{ time }}</span>
+            <span> + {{maxLateNumber}}<span>&nbsp;</span>{{ defaultSelectedmaxLateNumberUnits.name }}</span>
+          </div>
+          </div>
+        </v-col>
+                <v-col cols="4">
+          <div style="display: flex">
+          <div>
+
+                        <v-icon>
+           mdi-timelapse
+            </v-icon>
+          </div>
+          <div style="display: flex; flex-direction: column">
+            
+            <span class="ml-1">{{ countDays }} дня</span>
+            <span> > {{ durationNumber }}<span>&nbsp;</span>{{ defaultSelectedVisiDurationUnits.name }}</span>
+          </div> 
+          </div>
+        </v-col>
+      </v-row>
+    </template>
+    <v-card>
+      <v-row class="ma-0" style="max-width: 1006px;">
+        <v-col style="min-width: 150px;max-width: 150px" class="pa-1">
+          <v-btn text dark width="100%" class="justify-start px-3" @click="setYesterday()">
+            <strong style="text-transform: none; font-size: 12px; color: black">Вчера</strong>
+          </v-btn>
+          <v-btn text dark width="100%" class="justify-start px-3" @click="setLastWeek()">
+            <strong style="text-transform: none; font-size: 12px; color: black">Прошлая неделя</strong>
+          </v-btn>
+          <v-btn text dark width="100%" class="justify-start px-3" @click="setLastMonth()">
+            <strong style="text-transform: none; font-size: 12px; color: black">Прошлый месяц</strong>
+          </v-btn>
+          <v-divider></v-divider>
+          <v-btn text dark width="100%" class="justify-start px-3" @click="setToday()">
+            <strong style="text-transform: none; font-size: 12px; color: black">Сегодня</strong>
+          </v-btn>
+          <v-btn text dark width="100%" class="justify-start px-3" @click="setCurrentWeek()">
+            <strong style="text-transform: none; font-size: 12px; color: black">Текущая неделя</strong>
+          </v-btn>
+          <v-btn text dark width="100%" class="justify-start px-3" @click="setCurrentMonth()">
+            <strong style="text-transform: none; font-size: 12px; color: black">Текущий месяц</strong>
+          </v-btn>
+          <v-divider></v-divider>
+        </v-col>
+        <v-col style="max-width: 605px">
+          <v-row class="ma-0" align="center">
+            <div style="font-size: 14px"><strong>Время начала визита </strong></div>
+          </v-row>
+          <v-row class="ma-0">
+            <v-date-picker v-model="computeDateRangeFilter" color="primary" no-title scrollable range
+              show-adjacent-months :picker-date.sync="pickerDateRangeFrom">
+            </v-date-picker>
+            <v-date-picker v-model="computeDateRangeFilter" color="primary" no-title scrollable range
+              show-adjacent-months :picker-date.sync="pickerDateRangeTo">
+            </v-date-picker>
+          </v-row>
+          <v-row class="ma-0">
+            <v-col cols="6" class="pa-0">
+              <v-row class="ma-0">
+                <div style="font-size: small">
+                </div>
+                <v-select v-model="computedHoursRangeFrom" class="ml-1 mr-1" style="max-width: 80px" color="indigo"
+                  hide-details dense outlined :items="arrayHours">
+                </v-select>
+                <span>:</span>
+                <v-select v-model="computedMinutesRangeFrom" class="ml-1" style="max-width: 80px" color="indigo"
+                  hide-details dense outlined :items="arrayMinutes">
+                </v-select>
+              </v-row>
+
+            </v-col>
+            <v-col cols="6" class="pa-0">
+              <v-row class="ma-0">
+                <v-select v-model="computedHoursRangeTo" class="ml-1 mr-1" style="max-width: 80px" color="indigo"
+                  hide-details dense outlined :items="arrayHours">
+                </v-select>
+                <span>:</span>
+                <v-select v-model="computedMinutesRangeTo" class="ml-1" style="max-width: 80px" color="indigo"
+                  hide-details dense outlined :items="arrayMinutes">
+                </v-select>
+              </v-row>
+            </v-col>
+          </v-row>
+          <v-row class="ma-0" align="center">
+            <div style="font-size: small">
+              Выбран интервал {{countDays}} дней
+            </div>
+          </v-row>
+        </v-col>
+        <v-col cols="3">
+          <v-row>
+            <v-btn small icon class="ml-auto" @click="menuDateRangeFilter = false">
+              <v-icon>
+                mdi-close
+              </v-icon>
+            </v-btn>
+          </v-row>
+          <v-row>Допустимое опоздание:</v-row>
+          <v-row>
+            <v-col cols="3">
+              <v-text-field class="pt-0 mt-0" min="0" v-model="maxLateNumber" hide-details single-line type="number" />
+            </v-col>
+            <v-col cols="6">
+              <v-select item-text="name" v-model="defaultSelectedmaxLateNumberUnits" item-value="key" :items="units"
+                dense></v-select>
+            </v-col>
+          </v-row>
+          <v-row>Длительность визита:</v-row>
+          <v-row>
+            <v-col cols="3">
+              <v-text-field class="pt-0 mt-0" min="0"  v-model="durationNumber" hide-details single-line type="number" />
+            </v-col>
+            <v-col cols="6">
+              <v-select item-text="name" v-model="defaultSelectedVisiDurationUnits" item-value="key" :items="units"
+                dense></v-select>
+            </v-col>
+          </v-row>
+          <v-row>Игнорировать случайные визиты менее:</v-row>
+          <v-row>
+            <v-col cols="3">
+              <v-text-field class="pt-0 mt-0" min="0"  v-model="ignoreRandomVisitsNumber" hide-details single-line
+                type="number" />
+            </v-col>
+            <v-col cols="6">
+              <v-select item-text="name" v-model="defaultSelectedVisitsUnits" item-value="key" :items="units" dense>
+              </v-select>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
+    </v-card>
+  </v-menu>
+</template>
+
+<script>
+  import moment from "moment";
+
+  export default {
+    name: "MenuDateTimePickerRange",
+    model: {
+      prop: 'dateRange',
+      event: 'change-date-range'
+    },
+    props: {
+      dateRange: Array,
+    },
+    computed: {
+      year(){
+        return moment(this.dateRange[0]).format('YYYY')
+      },
+      time() {
+        return this.computedHoursRangeFrom + ':' + this.computedMinutesRangeFrom
+      },
+      date() {
+        let monthNumber = moment(this.dateRange[0]).format('DD')
+        let monthName = moment(this.dateRange[0]).format('MM')
+        monthName = moment.monthsShort(monthName - 1)
+        return monthNumber + ' ' + monthName
+      },
+      computedHoursRangeFrom: {
+        get() {
+          return moment(this.dateRange[0]).format('HH')
+        },
+        set(val) {
+          this.$emit('change-date-range', [moment(this.dateRange[0]).hours(val).toDate(), this.dateRange[1]])
+          return val
+        }
+      },
+      computedHoursRangeTo: {
+        get() {
+          return moment(this.dateRange[1]).format('HH')
+        },
+        set(val) {
+          this.$emit('change-date-range', [this.dateRange[0], moment(this.dateRange[1]).hours(val).toDate()])
+          return val;
+        }
+      },
+      computedMinutesRangeFrom: {
+        get() {
+          return moment(this.dateRange[0]).format('mm')
+        },
+        set(val) {
+          this.$emit('change-date-range', [moment(this.dateRange[0]).minutes(val).toDate(), this.dateRange[1]])
+          return val;
+        }
+      },
+      computedMinutesRangeTo: {
+        get() {
+          return moment(this.dateRange[1]).format('mm')
+        },
+        set(val) {
+          this.$emit('change-date-range', [this.dateRange[0], moment(this.dateRange[1]).minutes(val).toDate()])
+          return val;
+        }
+      },
+      computeDateRangeFilter: {
+        get() {
+          return [moment(this.dateRange[0]).format('YYYY-MM-DD'),
+            moment(this.dateRange[1]).format('YYYY-MM-DD')
+          ]
+        },
+        set([start]) {
+          let from = moment(start).hours(this.computedHoursRangeFrom).minutes(this.computedMinutesRangeFrom).toDate();
+          let to = moment(start).hours(this.computedHoursRangeTo).minutes(this.computedMinutesRangeTo).toDate();
+          if (!this.dateRange[1] || moment(this.dateRange[0]).format('YYYY-MM-DD') !== moment(this.dateRange[1])
+            .format('YYYY-MM-DD')) {
+            this.$emit('change-date-range', [from, to]);
+          } else {
+            if (+this.dateRange[0] > +to) {
+              this.$emit('change-date-range', [from, this.dateRange[0]]);
+            } else {
+              this.$emit('change-date-range', [this.dateRange[0], to]);
+            }
+          }
+
+        },
+      },
+    },
+    watch: {
+      pickerDateRangeTo(val) {
+        if (val === this.pickerDateRangeFrom)
+          this.pickerDateRangeFrom = moment(val).add(-1, 'months').format('YYYY-MM')
+      },
+      pickerDateRangeFrom(val) {
+        if (val === this.pickerDateRangeTo)
+          this.pickerDateRangeTo = moment(val).add(1, 'months').format('YYYY-MM')
+      },
+      dateRange(val) {
+        if (val[0] && val[1])
+          this.countDays = Math.abs(moment(this.dateRange[1]).diff(this.dateRange[0], 'day')) + 1
+      }
+    },
+    methods: {
+      setLastMonth() {
+        this.$emit('change-date-range', [
+          moment().add(-1, 'month').startOf('month').hours(0).minutes(0).seconds(0).toDate(),
+          moment().add(-1, 'month').endOf('month').hours(23).minutes(59).seconds(59).toDate()
+        ])
+      },
+      setLastWeek() {
+        this.$emit('change-date-range', [
+          moment().add(-1, 'week').days(0).hours(0).minutes(0).seconds(0).toDate(),
+          moment().add(-1, 'week').days(6).hours(23).minutes(59).seconds(59).toDate()
+        ])
+      },
+      setYesterday() {
+        this.$emit('change-date-range', [
+          moment().add(-1, 'day').hours(0).minutes(0).seconds(0).toDate(),
+          moment().add(-1, 'day').hours(23).minutes(59).seconds(59).toDate()
+        ])
+      },
+      setToday() {
+        this.$emit('change-date-range', [
+          moment().hours(0).minutes(0).seconds(0).toDate(),
+          moment().toDate()
+        ])
+      },
+      setCurrentWeek() {
+        this.$emit('change-date-range', [
+          moment().days(0).hours(0).minutes(0).seconds(0).toDate(),
+          moment().toDate()
+        ])
+      },
+      setCurrentMonth() {
+        this.$emit('change-date-range', [
+          moment().date(1).hours(0).minutes(0).seconds(0).toDate(),
+          moment().toDate()
+        ])
+      }
+    },
+    data: () => ({
+      maxLateNumber: 0,
+      defaultSelectedmaxLateNumberUnits: {
+        key: 'minute',
+        name: 'минуты'
+      },
+      durationNumber: 0,
+      defaultSelectedVisiDurationUnits: {
+        key: 'minute',
+        name: 'минуты'
+      },
+      ignoreRandomVisitsNumber: 0,
+      defaultSelectedVisitsUnits: {
+        key: 'minute',
+        name: 'минуты'
+      },
+      units: [{
+          key: 'minute',
+          name: 'минуты'
+        },
+        {
+          key: 'hour',
+          name: 'часа'
+        },
+        {
+          key: 'day',
+          name: 'дня'
+        },
+
+      ],
+      menuDateRangeFilter: false,
+      countDays: 0,
+      pickerDateRangeFrom: null,
+      pickerDateRangeTo: null,
+      arrayHours: Array.from({
+        length: 24
+      }, (v, k) => {
+        return moment().hours(k).format('HH')
+      }),
+      arrayMinutes: Array.from({
+        length: 60
+      }, (v, k) => {
+        return moment().minutes(k).format('mm')
+      })
+    })
+  }
+</script>
+
+<style scoped>
+  ::v-deep .v-text-field--outlined.v-input--dense.v-text-field--outlined>.v-input__control>.v-input__slot {
+    min-height: 28px;
+    max-height: 28px;
+  }
+
+  ::v-deep .v-text-field--enclosed.v-input--dense:not(.v-text-field--solo).v-text-field--outlined .v-input__append-inner {
+    margin: 2px;
+  }
+
+  ::v-deep .v-date-picker-table .v-btn.v-btn--active {
+    color: #FFFFFF !important;
+  }
+
+  ::v-deep .v-btn--rounded {
+    border-radius: 0
+  }
+</style>
